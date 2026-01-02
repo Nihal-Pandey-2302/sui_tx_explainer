@@ -1,12 +1,23 @@
 import type { SuiTransactionBlockResponse } from '@mysten/sui/client';
-import { CheckCircle2, XCircle, Box, Coins, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle2, XCircle, Box, Coins, FileText, Sparkles, Zap } from 'lucide-react';
 import { formatAddress, formatBalance } from '../lib/utils';
+import { checkAiHealth, generateAiExplanation } from '../lib/ai';
 
 interface TxSummaryProps {
   tx: SuiTransactionBlockResponse;
 }
 
 export function TxSummary({ tx }: TxSummaryProps) {
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiActive, setAiActive] = useState(false);
+
+  useEffect(() => {
+    checkAiHealth().then(setAiActive);
+  }, []);
+
   const status = tx.effects?.status.status;
   const error = tx.effects?.status.error;
   const sender = tx.transaction?.data.sender;
@@ -59,16 +70,65 @@ export function TxSummary({ tx }: TxSummaryProps) {
       return type;
   };
 
+  // AI Generation Effect
+  useEffect(() => {
+    if (aiEnabled && !aiExplanation && !aiLoading && aiActive) {
+        setAiLoading(true);
+        const summaryData = {
+            sender,
+            status,
+            moveCall: moveCallLabel,
+            balanceChanges: balanceChanges.map((b: any) => ({ amount: b.amount, coinType: b.coinType })),
+            objectChangesCount: objectChanges.length
+        };
+        
+        generateAiExplanation(summaryData).then(res => {
+            setAiExplanation(res.explanation || res.error || "No explanation generated.");
+            setAiLoading(false);
+        });
+    }
+  }, [aiEnabled, aiActive, tx]);
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 animate-fade-in-up">
-      {/* Narrative Section */}
+      {/* Narrative Section with AI Toggle */}
       <div className="p-6 bg-blue-600/10 border border-blue-500/20 rounded-xl flex items-start gap-4">
         <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-            <FileText className="w-6 h-6" />
+            {aiEnabled ? <Sparkles className="w-6 h-6 animate-pulse text-purple-400" /> : <FileText className="w-6 h-6" />}
         </div>
-        <div>
-            <h3 className="text-lg font-semibold text-blue-100 mb-1">Summary</h3>
-            <p className="text-blue-200/80 leading-relaxed font-mono text-sm">{narrative}</p>
+        <div className="flex-1">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-semibold text-blue-100 flex items-center gap-2">
+                    {aiEnabled ? "AI Analysis (Preview)" : "Summary"}
+                </h3>
+                 <div className="flex items-center gap-2">
+                    {aiActive && (
+                        <label className="flex items-center cursor-pointer relative group">
+                            <input type="checkbox" className="sr-only peer" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} />
+                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            <span className="ml-2 text-xs font-medium text-slate-400 group-hover:text-slate-200 transition-colors">AI Mode</span>
+                        </label>
+                    )}
+                </div>
+            </div>
+            
+            {aiEnabled ? (
+                <div className="min-h-[60px] animate-in fade-in duration-300">
+                    {aiLoading ? (
+                        <div className="flex items-center gap-2 text-purple-300/70 text-sm animate-pulse">
+                            <Sparkles className="w-4 h-4" /> Generating insight via Groq LPU...
+                        </div>
+                    ) : (
+                        <p className="text-purple-200/90 leading-relaxed font-mono text-sm">{aiExplanation}</p>
+                    )}
+                    <div className="mt-3 text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5 border-t border-slate-700/30 pt-2">
+                        <Zap className="w-3 h-3 text-orange-400" />
+                        POWERED BY GROQ & LLAMA 3.3
+                    </div>
+                </div>
+            ) : (
+                <p className="text-blue-200/80 leading-relaxed font-mono text-sm">{narrative}</p>
+            )}
         </div>
       </div>
 
