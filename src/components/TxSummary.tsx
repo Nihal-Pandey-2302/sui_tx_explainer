@@ -297,6 +297,7 @@ export function TxSummary({ tx }: TxSummaryProps) {
             title="Object Updates"
             icon={<Box className="w-5 h-5 text-purple-400" />}
             count={published.length + createdObjects.length + relevantMutated.length}
+            defaultOpen={true}
         >
           <div className="space-y-4 flex-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar mt-4">
              {published.length > 0 && (
