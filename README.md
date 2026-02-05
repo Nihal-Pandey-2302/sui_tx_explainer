@@ -22,23 +22,25 @@ It was built as a robust **Single Page Application (SPA)** using React and the o
 
 <div align="center">
   <table width="100%">
+    <!-- 1. Complex DeFi Swap (Full Width) -->
     <tr>
       <td colspan="2" align="center">
-        <h3>Complex DeFi Swaps</h3>
-        <p>Visualizes multi-hop asset flows.</p>
-        <img src="src/assets/gifs/Complex%20txn.gif" width="100%" alt="DeFi Swap" />
+        <h3>1. Complex DeFi Swaps</h3>
+        <p>Visualizes multi-hop programmable transaction flows in a single view.</p>
+        <img src="src/assets/gifs/Complex%20txn.gif" alt="DeFi Swap" style="max-width: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
       </td>
     </tr>
+    <!-- 2. Split View for NFT & Diagnostics -->
     <tr>
       <td align="center" width="50%">
-        <h3>NFT Marketplace</h3>
-        <p>Tracks object mutations & sales.</p>
-        <img src="src/assets/gifs/nftpricechange.gif" width="100%" alt="NFT" />
+        <h3>2. NFT Marketplace</h3>
+        <p>Tracks object mutations & price changes.</p>
+        <img src="src/assets/gifs/nftpricechange.gif" alt="NFT" style="max-width: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
       </td>
       <td align="center" width="50%">
-        <h3>Diagnostics</h3>
+        <h3>3. Diagnostics</h3>
         <p>Instantly identifies failure reasons.</p>
-        <img src="src/assets/gifs/failedprogtxn.gif" width="100%" alt="Failed Tx" />
+        <img src="src/assets/gifs/failedprogtxn.gif" alt="Failed Tx" style="max-width: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
       </td>
     </tr>
   </table>
@@ -184,6 +186,23 @@ sui-tx-explainer/
 - **Mainnet/Testnet Toggle**: Switch between networks for debugging.
 - **Visualizer V2**: Support for nested inputs and complex Merge/Split flows.
 - **Dark/Light Mode**: Full theme support.
+
+---
+
+---
+
+## ✅ RFP Deliverables & Scope
+
+This project was built to specifically address the **Sui Transaction Explainer** RFP. Below is the feature-to-requirement mapping:
+
+| RFP Requirement                 |     Status      | Implementation Details                                                       |
+| :------------------------------ | :-------------: | :--------------------------------------------------------------------------- |
+| **User-Friendly Web App**       |   ✅ **Done**   | Polished React SPA with Inter font, responsive layout, and "Genuine" design. |
+| **Fetch Transaction Details**   |   ✅ **Done**   | Real-time fetching via `@mysten/sui` RPC client (standard & clean).          |
+| **Human-Readable Summaries**    |   ✅ **Done**   | "Twitter-style" feed (e.g., "Swapped Coin A for Coin B") replacing raw logs. |
+| **Visual Flow (Optional)**      | 🚀 **Exceeded** | Full interactive visualizer node graph for Programmable Transaction Blocks.  |
+| **Gas & Object Context**        |   ✅ **Done**   | Approximate USD gas conversion + Clear "Created/Mutated" object badges.      |
+| **"Explain Another" (Stretch)** |   ✅ **Done**   | One-click reset button in the sticky header for rapid demos.                 |
 
 ---
 
