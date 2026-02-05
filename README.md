@@ -2,7 +2,7 @@
 
 > **"Decode the Block"** — A developer-friendly explorer that transforms raw Sui transaction data into human-readable insights.
 
-**[Live Demo](https://sui-tx-explainer.vercel.app/)** | **[Report Bug](https://github.com/yourusername/sui-tx-explainer/issues)**
+**[Live Demo](https://sui-tx-explainer.vercel.app/)** | **[Report Bug](https://github.com/Nihal-Pandey-2302/sui_tx_explainer/issues)**
 
 ---
 
