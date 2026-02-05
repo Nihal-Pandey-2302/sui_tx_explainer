@@ -117,7 +117,22 @@ Rendering infinite horizontal flows in a responsive container is non-trivial. Ea
 
 ### 3. Data Normalization & Type Safety
 
-Sui's JSON-RPC responses are nested and complex. We built a normalization layer (`src/lib/sui.ts`) that leverages the strict typing from `@mysten/sui/client`:
+Sui's JSON-RPC responses are nested and complex. We built a normalization layer (`src/lib/sui.ts`) that leverages the strict typing from `@mysten/sui/client`.
+
+#### System Data Flow
+
+```mermaid
+graph TD
+    User[User Interaction] -->|Enter Digest/Link| App[App Controller]
+    App -->|Fetch Data| SDK[@mysten/sui SDK]
+    SDK -->|JSON-RPC Request| Node[Sui Fullnode]
+    Node -->|Raw Response| SDK
+    SDK -->|Typed Response| Normalizer[Data Normalization Layer]
+    Normalizer -->|Clean Transactions| Visualizer[TxVisualizer (Flow Graph)]
+    Normalizer -->|Semantic Events| Feed[Activity Feed (Parsing Logic)]
+    Normalizer -->|Asset Changes| Summary[Smart Accordions]
+    Summary -.->|Optional Context| AI[Groq LPU (LLM Analysis)]
+```
 
 - **Strict Mode Fetch**: We use `getTransactionBlock` with specific flags (`showBalanceChanges`, `showEffects`, `showInput`, `showObjectChanges`) to minimize payload size while ensuring all necessary visual data is present.
 - **Protocol Mapping**: We maintain a registry in `src/lib/protocols.ts` that maps Package IDs to protocol metadata (Name, Icon). This decoupling allows for easy addition of new protocols without touching UI code.

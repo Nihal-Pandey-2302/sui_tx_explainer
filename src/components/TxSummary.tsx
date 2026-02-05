@@ -259,7 +259,7 @@ export function TxSummary({ tx }: TxSummaryProps) {
             title="Balance Changes" 
             icon={<Coins className="w-5 h-5 text-blue-400" />} 
             count={balanceChanges.length}
-            defaultOpen={balanceChanges.length > 0 && balanceChanges.length < 5}
+            defaultOpen={true}
         >
           {balanceChanges.length === 0 ? (
             <p className="text-slate-500 italic mt-4">No balance changes.</p>
