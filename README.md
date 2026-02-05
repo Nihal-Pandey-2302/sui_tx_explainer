@@ -1,120 +1,146 @@
-# Sui Transaction Explainer
+# Sui Decode - Transaction Explainer
 
-A user-friendly web application that translates complex Sui blockchain transactions into plain English. Simply paste a transaction digest or explorer URL to see what happened—who sent what to whom, which objects were created or modified, and how much gas was consumed.
+> **"Decode the Block"** — A developer-friendly explorer that transforms raw Sui transaction data into human-readable insights.
 
-🔗 **[Live Demo](https://sui-tx-explainer.vercel.app/)**
-
-![Transaction Overview](./src/assets/TXgen.png)
-![Transaction Details](./src/assets/TX1.png)
-![Failed Transaction Handling](./src/assets/TXFailed.png)
+**[Live Demo](https://sui-tx-explainer.vercel.app/)** | **[Report Bug](https://github.com/yourusername/sui-tx-explainer/issues)**
 
 ---
 
-## 🎯 Overview
+## 📖 Introduction
 
-This project was developed as part of the **Sui Request for Proposal Program** to address a common pain point: blockchain transactions are technically dense and difficult to understand. Our solution bridges that gap by providing:
+Sui Decode is a specialized block explorer designed to unravel the complexity of **Programmable Transaction Blocks (PTBs)** on the Sui network. Unlike standard explorers that dump raw JSON or low-level logs, Sui Decode focuses on **Semantic Understanding**—telling the story of _what_ happened, not just _how_ it executed.
 
-- **Human-readable summaries** of complex blockchain operations
-- **Visual representation** of asset flows and object mutations
-- **Deep linking support** for seamless integration with Sui explorers
-- **Instant feedback** for both successful and failed transactions
+It was built as a robust **Single Page Application (SPA)** using React and the official `@mysten/sui` SDK, enabling users to:
 
----
-
-## ✨ Features
-
-### Core Functionality
-
-- **Smart Input Parsing**: Accepts transaction digests or full Sui Explorer URLs
-- **Real-time Data Fetching**: Queries Sui Mainnet RPC for authoritative transaction details
-- **AI-Powered Analysis (Preview)**:  
-  _Integrates Groq LPU + Llama 3.3_ to provide experimental natural language explanations for complex transactions.
-- **Intelligent Summarization**: Translates raw blockchain data into actionable insights:
-  - _"Alice transferred NFT #1234 to Bob"_
-  - _"2 new objects were created"_
-  - _"Gas used: 0.015 SUI"_
-
-### User Experience
-
-- **Balance Change Analysis**: Net SUI flow calculated per address
-- **Object Lifecycle Tracking**: Clear visualization of Created, Mutated, and Deleted objects
-- **Move Call Identification**: Displays which smart contract functions were executed
-- **Error Handling**: Graceful feedback for invalid inputs or failed transactions
+1.  **Visualize** complex asset flows (DeFi swaps, NFT trades).
+2.  **Diagnose** failed transactions with clear error resolution.
+3.  **Understand** high-level activities (Staking, Swapping) at a glance.
 
 ---
 
-## 🏗️ Architecture
+## 🎥 Showcase
 
-### Current Implementation (MVP)
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td align="center" width="50%">
+        <h3>Complex DeFi Swaps</h3>
+        <p>Visualizes multi-hop asset flows.</p>
+        <img src="src/assets/gifs/Complex%20txn.gif" width="100%" alt="DeFi Swap" />
+      </td>
+      <td align="center" width="50%">
+        <h3>NFT Marketplace</h3>
+        <p>Tracks object mutations & sales.</p>
+        <img src="src/assets/gifs/nftpricechange.gif" width="100%" alt="NFT" />
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center">
+        <h3>Diagnostics</h3>
+        <p>Instantly identifies failure reasons.</p>
+        <br />
+        <img src="src/assets/gifs/failedprogtxn.gif" width="80%" alt="Failed Tx" />
+      </td>
+    </tr>
+  </table>
+</div>
 
-**Type:** Client-Side Single Page Application (SPA)
+---
 
-The application runs entirely in the browser with no custom backend required.
+## ⚡ Key Features
 
+### 1. Interactive Transaction Visualizer
+
+The core of the application. It parses linear PTB commands into a visual flow diagram.
+
+- **Command Nodes**: Represents individual Move calls (e.g., `splitCoins`, `transferObjects`, `moveCall`).
+- **Dependency Tracking**: Arrows indicate the flow of objects between commands.
+- **Protocol Recognition**: Automatically identifies known protocols (e.g., Cetus, DeepBook) via package IDs.
+
+### 2. "Twitter-Style" Activity Feed
+
+Raw event logs are often noisy. We implemented a parsing layer that filters and maps events to human-readable "Activities":
+
+- `0x...::pool::swap` → **"Swapped Coin A for Coin B"**
+- `0x...::staking::request` → **"Staked SUI"**
+- Includes "Show More/Less" toggles for density management.
+
+### 3. Smart Object & Balance Tracking
+
+- **Balance Changes**: Visualized with color-coded rows (Green for In, Red for Out) and formatted generic coin types (e.g., `Coin<SUI>`).
+- **Object Lifecycle**: Tracks `Created`, `Mutated`, `Deleted`, and `Wrapped` objects with distinct "Badge" styles for quick scanning.
+
+### 4. Diagnostic Error Handling
+
+When a transaction fails, Sui Decode doesn't just say "Failure". It:
+
+- Extracts the specific **Move Abort Code**.
+- Highlights the exact **Command Index** that caused the failure.
+- Provides context (e.g., "Insufficient Coin Balance").
+
+---
+
+## 🏗️ Technical Architecture & Engineering Decisions
+
+This project solves several specific engineering challenges related to blockchain data visualization.
+
+### 1. "Clean URL" State Management
+
+We implemented a hybrid routing pattern to support both **Deep Linking** and **Clean Resets**.
+
+- **Challenge**: Storing state in the URL (`?digest=...`) is great for sharing, but bad for application reset. Hitting "Refresh" typically reloads the stale transaction.
+- **Solution**:
+  1.  **On Mount**: The app checks `window.location.search` for a digest.
+  2.  **Fetch & Purge**: Immediately after initiating the data fetch, we call `window.history.replaceState({}, '', '/')`.
+  3.  **Result**: The user sees the transaction data, but the URL is clean. Hitting "Refresh" acts as a true "Reset" to the home screen.
+  4.  **Sharing**: The "Share Result" button manually constructs the deep link (`domain.com/?digest=...`) for clipboard copying.
+
+### 2. Robust Visualizer Layout (Flexbox vs Absolute)
+
+Rendering infinite horizontal flows in a responsive container is non-trivial. Early iterations using absolute positioning led to clipping issues on overflow. We refuted to a **Flexbox Parent-Child** architecture:
+
+```tsx
+// Outer Container: Manages Scroll & Padding
+<div className="w-full overflow-x-auto custom-scrollbar px-8">
+  {/* Inner Container: Forces Width */}
+  <div className="flex items-center gap-4 min-w-max">
+    {commands.map((cmd) => (
+      <CommandBlock />
+    ))}
+  </div>
+</div>
 ```
-┌─────────────┐      JSON-RPC       ┌──────────────────┐
-│             │ ──────────────────> │  Sui Public RPC  │
-│             │ <────────────────── │   (Mainnet)      │
-│   Browser   │                     └──────────────────┘
-│  (React App)│      REST API       ┌──────────────────┐
-│             │ ──────────────────> │     Groq API     │
-│             │ <────────────────── │   (Llama 3.3)    │
-└─────────────┘                     └──────────────────┘
+
+- **`min-w-max`**: Critical for ensuring the inner container expands to fit _all_ children, preventing the "clipped arrow" bug on the right edge.
+- **`px-8`**: Applied to the scroll owner to ensure breathing room at the start/end of the flow.
+
+### 3. Data Normalization & Type Safety
+
+Sui's JSON-RPC responses are nested and complex. We built a normalization layer (`src/lib/sui.ts`) that leverages the strict typing from `@mysten/sui/client`:
+
+- **Strict Mode Fetch**: We use `getTransactionBlock` with specific flags (`showBalanceChanges`, `showEffects`, `showInput`, `showObjectChanges`) to minimize payload size while ensuring all necessary visual data is present.
+- **Protocol Mapping**: We maintain a registry in `src/lib/protocols.ts` that maps Package IDs to protocol metadata (Name, Icon). This decoupling allows for easy addition of new protocols without touching UI code.
+- **Safe Parsing**: All balance calculations use `BigInt` to prevent precision loss with SUI's 9-decimal precision.
+
+---
+
+## 📂 Project Structure
+
+```bash
+sui-tx-explainer/
+├── src/
+│   ├── components/
+│   │   ├── TxInput.tsx       # Search bar with validation & reset logic
+│   │   ├── TxVisualizer.tsx  # Flow diagram engine (Flexbox layout)
+│   │   ├── TxSummary.tsx     # Accordions for Balance/Objects
+│   │   └── TxActivity.tsx    # Semantic event parser
+│   ├── lib/
+│   │   ├── sui.ts            # RPC Client & Data Fetching
+│   │   ├── utils.ts          # Formatters (Address, Balance)
+│   │   └── protocols.ts      # Protocol Registry (Package ID Map)
+│   └── App.tsx               # Main State Controller
+└── index.html                # Entry point (Inter Font injection)
 ```
-
-**Data Flow:**
-
-1. **Input Layer**: User submits a transaction digest or URL
-2. **Data Layer**: `@mysten/sui` SDK queries `https://fullnode.mainnet.sui.io:443`
-3. **Processing Layer**: Raw JSON parsed to extract:
-   - Move function calls (e.g., `nft::mint`)
-   - Balance changes (net SUI flow per address)
-   - Object mutations (Created/Mutated/Deleted with cleaned type names)
-4. **Presentation Layer**: React components render styled results using TailwindCSS
-
-**Benefits:**
-
-- ✅ Zero infrastructure costs (static hosting)
-- ✅ Trustless architecture (direct chain verification)
-- ✅ Simple deployment and maintenance
-- ✅ No API keys or databases required
-
-### Future Architecture (Scaling Phase)
-
-For production deployments handling 10,000+ daily users:
-
-```
-┌─────────────┐     HTTPS      ┌──────────────┐    RPC     ┌─────────────┐
-│   Browser   │ ────────────> │  BFF Server  │ ────────> │  Private    │
-│             │ <──────────── │  + Cache     │ <──────── │  RPC Node   │
-└─────────────┘    Enhanced    └──────────────┘   Chain    └─────────────┘
-                   Response           │              Data
-                                      ▼
-                              ┌──────────────┐
-                              │ Redis Cache  │
-                              │  (Immutable  │
-                              │ Tx Storage)  │
-                              └──────────────┘
-```
-
-**Scaling Components:**
-
-| Component                | Purpose                                               | Technology Options                 |
-| ------------------------ | ----------------------------------------------------- | ---------------------------------- |
-| **Backend-for-Frontend** | Proxy requests, enrich data, protect API keys         | Node.js, Go, Rust                  |
-| **Caching Layer**        | Store immutable transaction data (90% cost reduction) | Redis, DynamoDB                    |
-| **Dedicated RPC**        | Guaranteed uptime and throughput                      | Shinami, Mysten Labs, Google Cloud |
-| **Metadata Service**     | Token names, logos, FIAT prices                       | Custom API + Database              |
-
-**Comparison:**
-
-| Aspect            | Current (MVP)       | Future (Production)        |
-| ----------------- | ------------------- | -------------------------- |
-| **Hosting**       | Static CDN (Vercel) | Containerized (Docker/K8s) |
-| **Data Source**   | Public endpoint     | Private RPC + Cache        |
-| **Cost**          | Free - $5/mo        | $100-500/mo                |
-| **Response Time** | 1-3 seconds         | <100ms (cached)            |
-| **Reliability**   | Best-effort         | 99.9% SLA                  |
 
 ---
 
@@ -122,172 +148,46 @@ For production deployments handling 10,000+ daily users:
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
-- Modern browser with JavaScript enabled
+- Node.js 18+
+- npm or yarn
 
 ### Installation
 
-1. **Clone the repository:**
+1.  **Clone the repository**
 
-   ```bash
-   git clone https://github.com/yourusername/sui-tx-explainer.git
-   cd sui-tx-explainer
-   ```
+    ```bash
+    git clone https://github.com/yourusername/sui-tx-explainer.git
+    cd sui-tx-explainer
+    ```
 
-2. **Install dependencies:**
+2.  **Install Dependencies**
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
-3. **Start development server:**
+3.  **Run Development Server**
 
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
-4. **Build for production:**
-   ```bash
-   npm run build
-   ```
-
-### Project Structure
-
-```
-sui-tx-explainer/
-├── src/
-│   ├── lib/
-│   │   └── sui.ts           # SuiClient initialization & RPC logic
-│   ├── components/
-│   │   ├── TxInput.tsx      # Digest/URL input handler
-│   │   ├── TxVisualizer.tsx # Visual flow diagram
-│   │   └── TxSummary.tsx    # Human-readable summary
-│   └── assets/              # Screenshots & static files
-├── dist/                    # Production build output
-└── package.json
-```
+4.  **Build for Production**
+    ```bash
+    npm run build
+    ```
 
 ---
 
-## 📦 Tech Stack
+## 🤝 Roadmap & Future Improvements
 
-| Layer                  | Technology      | Purpose                               |
-| ---------------------- | --------------- | ------------------------------------- |
-| **Frontend Framework** | React 18 + Vite | Fast dev experience, optimized builds |
-| **Styling**            | TailwindCSS v4  | Utility-first responsive design       |
-| **Blockchain SDK**     | `@mysten/sui`   | Official Sui TypeScript SDK           |
-| **Build Tool**         | Vite            | Lightning-fast HMR and bundling       |
-
----
-
-## 🌐 Deployment
-
-This is a static site compatible with all modern hosting platforms:
-
-**Recommended Hosts:** Vercel, Netlify, Cloudflare Pages, GitHub Pages
-
-**Configuration:**
-
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-- **Node Version:** 18.x or higher
-
-**Environment Variables:**
-
-To enable the AI Preview mode, you must set the following environment variable in your Vercel/Netlify dashboard:
-
-```env
-VITE_GROQ_API_KEY=your_groq_api_key_here
-```
-
-_(Get a free key at [console.groq.com](https://console.groq.com))_
-
-**Optional (Scaling):**
-
-```env
-VITE_SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
-```
-
----
-
-## 📊 Data Source
-
-**Current:** Public Sui Mainnet fullnode at `https://fullnode.mainnet.sui.io:443`
-
-**Rate Limits:** No API key required for basic usage. For high-traffic applications, consider:
-
-- [Shinami](https://www.shinami.com/) - Managed Sui infrastructure
-- [Mysten Labs](https://mystenlabs.com/) - Official Sui services
-- Self-hosted fullnode for complete control
-
-**API Documentation:** [Sui JSON-RPC Reference](https://docs.sui.io/references/sui-api)
-
----
-
-## 🗺️ Roadmap
-
-### Phase 1: MVP ✅
-
-- [x] Transaction digest parsing
-- [x] Balance change calculation
-- [x] Object mutation tracking
-- [x] Basic visualization
-- [x] Static deployment
-
-### Phase 2: Enhanced UX (In Progress)
-
-- [ ] Multi-transaction comparison
-- [ ] Historical transaction search
-- [ ] Export summaries as PDF/PNG
-- [ ] Dark mode support
-
-### Phase 3: Production Scaling
-
-- [ ] Backend caching layer (Redis)
-- [ ] Dedicated RPC provider integration
-- [ ] Token metadata enrichment (logos, prices)
-- [ ] Real-time transaction monitoring
-- [ ] API for third-party integrations
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! This project is open source and community-driven.
-
-**How to contribute:**
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-**Development Guidelines:**
-
-- Follow existing code style (Prettier + ESLint configured)
-- Add tests for new features
-- Update documentation as needed
+- **Wallet Integration**: Connect wallet to view personal transaction history.
+- **Mainnet/Testnet Toggle**: Switch between networks for debugging.
+- **Visualizer V2**: Support for nested inputs and complex Merge/Split flows.
+- **Dark/Light Mode**: Full theme support.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Sui Foundation** for the RFP program support
-- **Mysten Labs** for the excellent TypeScript SDK
-- **Sui Community** for feedback and testing
-
----
-
-## 📞 Support
-
-- **Issues:** [GitHub Issues](https://github.com/yourusername/sui-tx-explainer/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/sui-tx-explainer/discussions)
-
----
+MIT

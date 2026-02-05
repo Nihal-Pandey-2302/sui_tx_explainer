@@ -1,6 +1,7 @@
 import type { SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { ArrowRight } from 'lucide-react';
 import { formatAddress } from '../lib/utils';
+import { identifyProtocol } from '../lib/protocols';
 
 interface TxVisualizerProps {
   tx: SuiTransactionBlockResponse;
@@ -32,13 +33,77 @@ export function TxVisualizer({ tx }: TxVisualizerProps) {
             <div className="text-sm font-medium text-slate-300">Sender</div>
         </div>
 
-        {/* Arrow & Tx Action */}
-        <div className="flex-1 flex flex-col items-center relative">
-            <div className="h-0.5 w-full bg-gradient-to-r from-blue-500/50 to-purple-500/50 absolute top-1/2 -translate-y-1/2 z-0"></div>
-            <div className="z-10 bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700 text-xs font-mono text-slate-300 shadow-lg">
-                EXECUTE
-            </div>
-            <ArrowRight className="w-5 h-5 text-slate-500 mt-1" />
+        {/* PTB Flow or Action */}
+        <div className="flex-1 flex flex-col gap-4 relative w-full overflow-x-auto p-4">
+             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 -z-10"></div>
+             
+             {/* If Programmable Transaction, show commands */}
+             {tx.transaction?.data.transaction?.kind === 'ProgrammableTransaction' ? (
+                 <div className="w-full overflow-x-auto custom-scrollbar pb-6 px-4 md:px-8">
+                    <div className="flex items-center gap-4 min-w-max">
+                     {(tx.transaction.data.transaction as any).transactions.map((cmd: any, i: number, arr: any[]) => {
+                         let label = "Command";
+                         let icon = "⚡";
+                         let detail = "";
+                         let color = "bg-slate-800 border-slate-700";
+
+                         if ('MoveCall' in cmd) {
+                             const mc = cmd.MoveCall;
+                             const proto = identifyProtocol(mc.package);
+                             if (proto) {
+                                 label = proto.name;
+                                 icon = proto.icon;
+                             } else {
+                                 label = "MoveCall";
+                                 icon = "📦";
+                             }
+                             detail = mc.function;
+                             color = "bg-blue-900/40 border-blue-500/50 text-blue-200";
+                         } else if ('SplitCoins' in cmd) {
+                             label = "SplitCoins";
+                             icon = "✂️";
+                             color = "bg-yellow-900/40 border-yellow-500/50 text-yellow-200";
+                         } else if ('MergeCoins' in cmd) {
+                             label = "MergeCoins";
+                             icon = "🔗";
+                             color = "bg-orange-900/40 border-orange-500/50 text-orange-200";
+                         } else if ('TransferObjects' in cmd) {
+                             label = "Transfer";
+                             icon = "➡️";
+                             color = "bg-green-900/40 border-green-500/50 text-green-200";
+                         } else if ('Publish' in cmd) {
+                             label = "Publish";
+                             icon = "upl";
+                             color = "bg-purple-900/40 border-purple-500/50 text-purple-200";
+                         }
+
+                         return (
+                             <div key={i} className="flex items-center gap-4 animate-in zoom-in slide-in-from-left duration-300" style={{ animationDelay: `${i * 150}ms` }}>
+                                 <div className={`relative flex-shrink-0 flex flex-col items-center gap-2 p-3 rounded-xl border ${color} shadow-lg min-w-[100px]`}>
+                                     <div className="text-xs font-bold uppercase tracking-wider opacity-70">{label}</div>
+                                     <div className="text-xl">{icon}</div>
+                                     {detail && <div className="text-[10px] font-mono max-w-[120px] truncate opacity-80" title={detail}>{detail}</div>}
+                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-[10px] font-mono text-slate-500">
+                                         {i}
+                                     </div>
+                                 </div>
+                                 
+                                 {/* Arrow as separate flex item */}
+                                 {i < arr.length - 1 && (
+                                     <ArrowRight className="w-5 h-5 text-slate-600 flex-shrink-0" />
+                                 )}
+                             </div>
+                         );
+                     })}
+                 </div>
+                 </div>
+             ) : (
+                <div className="flex flex-col items-center relative">
+                    <div className="z-10 bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700 text-xs font-mono text-slate-300 shadow-lg">
+                        EXECUTE
+                    </div>
+                </div>
+             )}
         </div>
 
         {/* Receivers/Network Node */}
