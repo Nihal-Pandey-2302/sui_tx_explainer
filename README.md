@@ -119,24 +119,46 @@ Rendering infinite horizontal flows in a responsive container is non-trivial. Ea
 
 Sui's JSON-RPC responses are nested and complex. We built a normalization layer (`src/lib/sui.ts`) that leverages the strict typing from `@mysten/sui/client`.
 
-#### System Data Flow
+#### System Data Flow (Current)
 
 ```mermaid
 graph TD
-    User[User Interaction] -->|Enter Digest/Link| App[App Controller]
-    App -->|Fetch Data| SDK[@mysten/sui SDK]
-    SDK -->|JSON-RPC Request| Node[Sui Fullnode]
-    Node -->|Raw Response| SDK
-    SDK -->|Typed Response| Normalizer[Data Normalization Layer]
-    Normalizer -->|Clean Transactions| Visualizer[TxVisualizer (Flow Graph)]
-    Normalizer -->|Semantic Events| Feed[Activity Feed (Parsing Logic)]
-    Normalizer -->|Asset Changes| Summary[Smart Accordions]
-    Summary -.->|Optional Context| AI[Groq LPU (LLM Analysis)]
+    User["User Interaction"] -->|Enter Digest| App["App Controller"]
+    App -->|Fetch Data| SDK["@mysten/sui SDK"]
+    SDK -->|JSON-RPC| Node["Sui Fullnode"]
+    Node -->|Raw JSON| SDK
+    SDK -->|Typed Resp| Norm["Normalization Layer"]
+    Norm -->|Clean Data| UI["Visualizer & Feed"]
+    Norm -->|Context| AI["Groq LPU (AI Analysis)"]
 ```
 
-- **Strict Mode Fetch**: We use `getTransactionBlock` with specific flags (`showBalanceChanges`, `showEffects`, `showInput`, `showObjectChanges`) to minimize payload size while ensuring all necessary visual data is present.
-- **Protocol Mapping**: We maintain a registry in `src/lib/protocols.ts` that maps Package IDs to protocol metadata (Name, Icon). This decoupling allows for easy addition of new protocols without touching UI code.
-- **Safe Parsing**: All balance calculations use `BigInt` to prevent precision loss with SUI's 9-decimal precision.
+- **Strict Mode Fetch**: We use `getTransactionBlock` with specific flags (`showBalanceChanges`, `showEffects`, `showInput`).
+- **Protocol Mapping**: Registry in `src/lib/protocols.ts` maps Package IDs to protocol metadata.
+- **Safe Parsing**: All balance calculations use `BigInt` to prevent precision loss.
+
+---
+
+## 🔮 Future Architecture (RFP Milestone 3)
+
+To move beyond the MVP, we plan to implement a **Backend-for-Frontend (BFF)** architecture to enhance performance, caching, and security.
+
+```mermaid
+graph LR
+    Client["Web Client"] <-->|REST API| BFF["BFF API (Node.js)"]
+    BFF <-->|Cache Hit?| Redis["Redis (Immutable Tx)"]
+    BFF <-->|Cache Miss| RPC["Sui RPC Network"]
+    BFF -->|Async Analysis| LLM["LLM Provider (Groq)"]
+    BFF -->|Rate Limits| Gateway["API Gateway"]
+```
+
+### Long Term Plan & RFP Roadmap
+
+This project is designed to evolve into a sustainable infrastructure piece for the Sui ecosystem.
+
+1.  **Backend-for-Frontend (BFF)**: Implementation of a secure API layer to handle caching for immutable transactions, reducing RPC load.
+2.  **Developer Tooling**: Exportable structured summaries (JSON) and improved error taxonomy for edge-case handling.
+3.  **Public API**: A rate-limited public API for other dApps and wallets to fetch human-readable transaction explanations programmatically.
+4.  **Sustainability**: Post-grant maintenance using rate limits and potential sponsored access for high-volume integrators.
 
 ---
 
