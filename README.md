@@ -23,23 +23,22 @@ It was built as a robust **Single Page Application (SPA)** using React and the o
 <div align="center">
   <table width="100%">
     <tr>
-      <td align="center" width="50%">
+      <td colspan="2" align="center">
         <h3>Complex DeFi Swaps</h3>
         <p>Visualizes multi-hop asset flows.</p>
         <img src="src/assets/gifs/Complex%20txn.gif" width="100%" alt="DeFi Swap" />
       </td>
+    </tr>
+    <tr>
       <td align="center" width="50%">
         <h3>NFT Marketplace</h3>
         <p>Tracks object mutations & sales.</p>
         <img src="src/assets/gifs/nftpricechange.gif" width="100%" alt="NFT" />
       </td>
-    </tr>
-    <tr>
-      <td colspan="2" align="center">
+      <td align="center" width="50%">
         <h3>Diagnostics</h3>
         <p>Instantly identifies failure reasons.</p>
-        <br />
-        <img src="src/assets/gifs/failedprogtxn.gif" width="80%" alt="Failed Tx" />
+        <img src="src/assets/gifs/failedprogtxn.gif" width="100%" alt="Failed Tx" />
       </td>
     </tr>
   </table>
